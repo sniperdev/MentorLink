@@ -1,0 +1,78 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache .NET Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/backend/**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Restore Dependencies
+        working-directory: ./backend
+        run: dotnet restore MentorLink.sln
+
+      - name: Lint Code
+        working-directory: ./backend
+        run: dotnet format --check
+
+      - name: Build Application
+        working-directory: ./backend
+        run: dotnet build MentorLink.sln --no-restore --configuration Development
+
+      - name: Run Tests
+        working-directory: ./backend
+        run: dotnet test MentorLink.sln --no-build --configuration Development --logger "trx;LogFileName=test-results.trx"
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache Node Modules
+        uses: actions/cache@v4
+        with:
+          path: ./frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('./frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Lint Code
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run Tests
+        working-directory: ./frontend
+        run: npm test
