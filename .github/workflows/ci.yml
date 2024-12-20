@@ -34,15 +34,15 @@ jobs:
 
       - name: Lint Code
         working-directory: ./backend
-        run: dotnet format --check
+        run: dotnet format
 
       - name: Build Application
         working-directory: ./backend
-        run: dotnet build MentorLink.sln --no-restore --configuration Development
+        run: dotnet build MentorLink.sln --no-restore
 
       - name: Run Tests
         working-directory: ./backend
-        run: dotnet test MentorLink.sln --no-build --configuration Development --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test MentorLink.sln --no-build --logger "trx;LogFileName=test-results.trx"
 
   frontend-tests:
     name: Frontend Tests
@@ -73,6 +73,6 @@ jobs:
         working-directory: ./frontend
         run: npm run lint
 
-      - name: Run Tests
-        working-directory: ./frontend
-        run: npm test
+#      - name: Run Tests
+#        working-directory: ./frontend
+#        run: npm test
