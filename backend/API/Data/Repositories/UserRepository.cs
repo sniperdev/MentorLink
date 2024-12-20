@@ -1,5 +1,5 @@
-using API.Data.Interfaces;
 using API.Entities;
+using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data.Repositories;
@@ -18,14 +18,7 @@ public class UserRepository : IUserRepository
         if (user == null) throw new ArgumentNullException(nameof(user), "User cannot be null");
 
         await _context.Users.AddAsync(user);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Error saving user to the database", ex);
-        }
+        await SaveChangesAsync("Error saving user to database");
     }
 
     public async Task UpdateUser(User user)
@@ -33,27 +26,28 @@ public class UserRepository : IUserRepository
         if (user == null) throw new ArgumentNullException(nameof(user), "User cannot be null");
 
         _context.Users.Update(user);
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException("Error updating user in the database", ex);
-        }
+        await SaveChangesAsync("Error updating user in the database");
     }
 
     public async Task<User?> GetUserByIdAsync(int id)
     {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null) throw new InvalidOperationException("User not found");
-        return user;
+        return await _context.Users.FindAsync(id);
     }
 
     public async Task<User?> GetUserByEmailAsync(string email)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
-        if (user == null) throw new InvalidOperationException("User not found");
-        return user;
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+    }
+
+    private async Task SaveChangesAsync(string errorMessage)
+    {
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException(errorMessage, ex);
+        }
     }
 }

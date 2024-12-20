@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Tests.Data.Repositories;
 
-public class UserRepositoryTests
+public class UserRepositoryTests : IAsyncLifetime
 {
-    private readonly DataContext _context;
-    private readonly UserRepository _userRepository;
+    private DataContext _context;
+    private UserRepository _userRepository;
 
-    public UserRepositoryTests()
+    public async Task InitializeAsync()
     {
         var options = new DbContextOptionsBuilder<DataContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -18,6 +18,25 @@ public class UserRepositoryTests
 
         _context = new DataContext(options);
         _userRepository = new UserRepository(_context);
+
+        await _context.Users.AddRangeAsync(
+            new User
+            {
+                Id = 1, FullName = "John Doe", Email = "john@example.com", Role = UserRole.Student,
+                CreatedAt = DateTime.UtcNow
+            },
+            new User
+            {
+                Id = 2, FullName = "Jane Doe", Email = "jane@example.com", Role = UserRole.Student,
+                CreatedAt = DateTime.UtcNow
+            });
+        await _context.SaveChangesAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        _context.Dispose();
+        return Task.CompletedTask;
     }
 
     [Fact]
@@ -25,7 +44,7 @@ public class UserRepositoryTests
     {
         var user = new User
         {
-            Id = 1,
+            Id = 3,
             FullName = "John",
             Email = "john@example.com",
             Role = UserRole.Student,
@@ -34,98 +53,66 @@ public class UserRepositoryTests
 
         await _userRepository.AddAsync(user);
 
-        var addedUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        var addedUser = await _context.Users.FindAsync(3);
         Assert.NotNull(addedUser);
-        Assert.Equal(user, addedUser);
+        Assert.Equal(user.Email, addedUser.Email);
+        Assert.Equal(user.FullName, addedUser.FullName);
     }
 
     [Fact]
     public async Task AddAsync_ShouldThrowArgumentNullException_WhenUserIsNull()
     {
-        User user = null;
-
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _userRepository.AddAsync(user));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _userRepository.AddAsync(null));
     }
 
     [Fact]
     public async Task GetUserById_ShouldReturnUser_WhenUserExists()
     {
-        var user = new User
-        {
-            Id = 1,
-            Email = "john@example.com",
-            FullName = "John",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.Now
-        };
+        var user = await _context.Users.FindAsync(1);
 
-        await _userRepository.AddAsync(user);
-
-        var findUser = await _userRepository.GetUserByIdAsync(1);
-
-        Assert.NotNull(findUser);
-        Assert.Equal(user.Id, findUser.Id);
-        Assert.Equal(user.Email, findUser.Email);
+        Assert.NotNull(user);
+        Assert.Equal(1, user.Id);
+        Assert.Equal("john@example.com", user.Email);
     }
 
     [Fact]
     public async Task GetUserById_ShouldThrowException_WhenUserNotExist()
     {
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _userRepository.GetUserByIdAsync(1));
+        var result = await _userRepository.GetUserByIdAsync(99);
+        Assert.Null(result);
     }
 
     [Fact]
     public async Task GetUserByEmail_ShouldReturnUser_WhenUserExists()
     {
-        var user = new User
-        {
-            Id = 1,
-            Email = "john@example.com",
-            FullName = "John",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.Now
-        };
+        var user = await _userRepository.GetUserByEmailAsync("john@example.com");
 
-        await _userRepository.AddAsync(user);
-
-        var findUser = await _userRepository.GetUserByEmailAsync("john@example.com");
-
-        Assert.NotNull(findUser);
-        Assert.Equal(user.Id, findUser.Id);
-        Assert.Equal(user.Email, findUser.Email);
+        Assert.NotNull(user);
+        Assert.Equal(1, user.Id);
+        Assert.Equal("john@example.com", user.Email);
     }
 
     [Fact]
     public async Task GetUserByEmail_ShouldThrowException_WhenUserNotExist()
     {
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _userRepository.GetUserByEmailAsync("john@example.com"));
+        var result = await _userRepository.GetUserByEmailAsync("other@example.com");
+        Assert.Null(result);
     }
 
     [Fact]
     public async Task UpdateUser_ShouldUpdateUser_WhenUserExists()
     {
-        var user = new User
-        {
-            Id = 1,
-            Email = "john@example.com",
-            FullName = "John",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.Now
-        };
-
-        await _userRepository.AddAsync(user);
-
-        user.Email = "eva@example.com";
-        user.FullName = "Eva";
+        var user = await _userRepository.GetUserByIdAsync(1);
+        user.FullName = "Updated Name";
+        user.Email = "updated@example.com";
 
         await _userRepository.UpdateUser(user);
 
         var updatedUser = await _userRepository.GetUserByIdAsync(1);
 
         Assert.NotNull(updatedUser);
-        Assert.Equal("eva@example.com", updatedUser.Email);
-        Assert.Equal("Eva", updatedUser.FullName);
+        Assert.Equal("updated@example.com", updatedUser.Email);
+        Assert.Equal("Updated Name", updatedUser.FullName);
     }
 
     [Fact]
