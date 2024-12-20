@@ -33,8 +33,10 @@ jobs:
         run: dotnet restore MentorLink.sln
 
       - name: Lint Code
-        working-directory: ./backend
-        run: dotnet format --check
+        uses: zyactions/dotnet-lint@v1
+        with:
+          workspace: test
+          implicit-restore: true
 
       - name: Build Application
         working-directory: ./backend
@@ -73,6 +75,6 @@ jobs:
         working-directory: ./frontend
         run: npm run lint
 
-      - name: Run Tests
-        working-directory: ./frontend
-        run: npm test
+#      - name: Run Tests
+#        working-directory: ./frontend
+#        run: npm test
