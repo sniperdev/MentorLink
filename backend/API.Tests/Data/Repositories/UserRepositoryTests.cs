@@ -7,8 +7,8 @@ namespace API.Tests.Data.Repositories;
 
 public class UserRepositoryTests : IAsyncLifetime
 {
-    private DataContext _context;
-    private UserRepository _userRepository;
+    private DataContext? _context;
+    private UserRepository? _userRepository;
 
     public async Task InitializeAsync()
     {
