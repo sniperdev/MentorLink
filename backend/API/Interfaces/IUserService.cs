@@ -4,8 +4,8 @@ namespace API.Interfaces;
 
 public interface IUserService
 {
-    Task CreateUserAsync(User user);
+    Task CreateUserAsync(User user, string password);
     Task<User> GetUserByIdAsync(int id);
     Task<User> GetUserByEmailAsync(string email);
-    Task UpdateUserAsync(User user);
+    Task UpdateUserAsync(int id, User user);
 }
