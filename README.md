@@ -71,6 +71,12 @@
       npm install
       npm run start
       ```
+	  
+	  ### Setup for HTTPS
+Before running the project, make sure to trust the ASP.NET Core developer certificate:
+
+```bash
+dotnet dev-certs https --trust
 
 4. **Access the Application**:
    Open your browser and go to [http://localhost:4200](http://localhost:4200).

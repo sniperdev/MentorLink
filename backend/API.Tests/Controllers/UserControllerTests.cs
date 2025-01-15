@@ -2,6 +2,7 @@ using API.Controllers;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -11,11 +12,12 @@ public class UsersControllerTests
 {
     private readonly UserController _controller;
     private readonly Mock<IUserService> _userServiceMock;
+    private readonly Mock<JwtTokenService> _jwtServiceMock = new();
 
     public UsersControllerTests()
     {
         _userServiceMock = new Mock<IUserService>();
-        _controller = new UserController(_userServiceMock.Object);
+        _controller = new UserController(_userServiceMock.Object, _jwtServiceMock.Object);
     }
 
     [Fact]
