@@ -67,7 +67,13 @@ public class UserController : ControllerBase
         try
         {
             var user = await _userService.GetUserByIdAsync(id);
-            return Ok(user);
+            var userDto = new UserDto
+            {
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString() // Konwersja enum na string
+            };
+            return Ok(userDto);
         }
         catch (InvalidOperationException ex)
         {
@@ -81,7 +87,13 @@ public class UserController : ControllerBase
         try
         {
             var user = await _userService.GetUserByEmailAsync(email);
-            return Ok(user);
+            var userDto = new UserDto
+            {
+                Email = user.Email,
+                FullName = user.FullName,
+                Role = user.Role.ToString() // Konwersja enum na string
+            };
+            return Ok(userDto);
         }
         catch (InvalidOperationException ex)
         {
