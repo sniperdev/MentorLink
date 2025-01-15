@@ -8,4 +8,5 @@ public interface IUserService
     Task<User> GetUserByIdAsync(int id);
     Task<User> GetUserByEmailAsync(string email);
     Task UpdateUserAsync(int id, User user);
+    bool ValidatePassword(User user, string password);
 }

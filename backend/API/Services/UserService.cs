@@ -14,6 +14,14 @@ public class UserService : IUserService
         _passwordHasherService = passwordHasherService;
     }
 
+    public bool ValidatePassword(User user, string password)
+    {
+        if (user == null) throw new ArgumentNullException(nameof(user), "User cannot be null");
+        if(string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Password cannot be null or empty", nameof(password));
+
+        return _passwordHasherService.VerifyPassword(user, user.PasswordHash, password);
+    }
+    
     public async Task<User> GetUserByIdAsync(int id)
     {
         var user = await _userRepository.GetUserByIdAsync(id);

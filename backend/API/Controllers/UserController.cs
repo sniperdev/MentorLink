@@ -1,6 +1,7 @@
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -10,10 +11,12 @@ namespace API.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly JwtTokenService _jwtTokenService;
 
-    public UserController(IUserService userService)
+    public UserController(IUserService userService, JwtTokenService jwtTokenService)
     {
         _userService = userService;
+        _jwtTokenService = jwtTokenService;
     }
 
     [HttpPost]
@@ -45,6 +48,19 @@ public class UserController : ControllerBase
         }
     }
 
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+        
+        var user = await _userService.GetUserByEmailAsync(loginDto.Email);
+        if(user==null || !_userService.ValidatePassword(user, loginDto.Password))
+            return Unauthorized(new { Error = "Invalid email or password" });
+
+        var token = _jwtTokenService.GenerateToken(user.Email, user.Role);
+        return Ok(new { Token = token });
+    }
+    
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(int id)
     {
