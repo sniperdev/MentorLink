@@ -35,10 +35,10 @@ public static class ApplicationServiceExtensions
             });
         services.AddAuthorization();
         services.AddCors();
-        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IUsersService, UsersService>();
         services.AddScoped<PasswordHasherService>();
         services.AddSingleton<JwtTokenService>();
-        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUsersRepository, UsersRepository>();
         return services;
     }
 }

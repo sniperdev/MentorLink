@@ -3,7 +3,7 @@ using API.Entities;
 
 namespace API.Interfaces;
 
-public interface IUserService
+public interface IUsersService
 {
     Task CreateUserAsync(User user, string password);
     Task<User> GetUserByIdAsync(int id);

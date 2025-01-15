@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
-public class UserController : ControllerBase
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly IUsersService _usersService;
     private readonly JwtTokenService _jwtTokenService;
 
-    public UserController(IUserService userService, JwtTokenService jwtTokenService)
+    public UsersController(IUsersService usersService, JwtTokenService jwtTokenService)
     {
-        _userService = userService;
+        _usersService = usersService;
         _jwtTokenService = jwtTokenService;
     }
 
@@ -34,7 +34,7 @@ public class UserController : ControllerBase
 
         try
         {
-            await _userService.CreateUserAsync(newUser, registerUserDto.Password);
+            await _usersService.CreateUserAsync(newUser, registerUserDto.Password);
             return Ok(new { Message = "User registered successfully" });
         }
         catch (ArgumentException ex)
@@ -53,8 +53,8 @@ public class UserController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
         
-        var user = await _userService.GetUserByEmailAsync(loginDto.Email);
-        if(user==null || !_userService.ValidatePassword(user, loginDto.Password))
+        var user = await _usersService.GetUserByEmailAsync(loginDto.Email);
+        if(user==null || !_usersService.ValidatePassword(user, loginDto.Password))
             return Unauthorized(new { Error = "Invalid email or password" });
 
         var token = _jwtTokenService.GenerateToken(user.Email, user.Role);
@@ -66,7 +66,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            var user = await _userService.GetUserByIdAsync(id);
+            var user = await _usersService.GetUserByIdAsync(id);
             var userDto = new UserDto
             {
                 Email = user.Email,
@@ -86,7 +86,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            var user = await _userService.GetUserByEmailAsync(email);
+            var user = await _usersService.GetUserByEmailAsync(email);
             var userDto = new UserDto
             {
                 Email = user.Email,
@@ -106,7 +106,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            await _userService.UpdateUserAsync(id, user);
+            await _usersService.UpdateUserAsync(id, user);
             return NoContent();
         }
         catch (InvalidOperationException ex)

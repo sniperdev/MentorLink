@@ -5,16 +5,16 @@ using Moq;
 
 namespace API.Tests.Services;
 
-public class UserServiceTests
+public class UsersServiceTests
 {
-    private readonly Mock<IUserRepository> _mockRepository;
-    private readonly UserService _userService;
+    private readonly Mock<IUsersRepository> _mockRepository;
+    private readonly UsersService _usersService;
 
-    public UserServiceTests()
+    public UsersServiceTests()
     {
-        _mockRepository = new Mock<IUserRepository>();
+        _mockRepository = new Mock<IUsersRepository>();
         var mockPasswordHasherService = new Mock<PasswordHasherService>();
-        _userService = new UserService(_mockRepository.Object, mockPasswordHasherService.Object);
+        _usersService = new UsersService(_mockRepository.Object, mockPasswordHasherService.Object);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class UserServiceTests
 
         _mockRepository.Setup(repo => repo.AddAsync(It.IsAny<User>())).Verifiable();
 
-        await _userService.CreateUserAsync(newUser, "password123");
+        await _usersService.CreateUserAsync(newUser, "password123");
 
         _mockRepository.Verify(repo => repo.AddAsync(newUser), Times.Once());
     }
@@ -58,7 +58,7 @@ public class UserServiceTests
 
         _mockRepository.Setup(repo => repo.GetUserByEmailAsync(newUser.Email)).ReturnsAsync(existingUser);
 
-        await Assert.ThrowsAsync<ArgumentException>(() => _userService.CreateUserAsync(newUser, "password123"));
+        await Assert.ThrowsAsync<ArgumentException>(() => _usersService.CreateUserAsync(newUser, "password123"));
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class UserServiceTests
 
         _mockRepository.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync(user);
 
-        var result = await _userService.GetUserByIdAsync(user.Id);
+        var result = await _usersService.GetUserByIdAsync(user.Id);
 
         Assert.NotNull(result);
         Assert.Equal(user.Id, result.Id);
@@ -87,7 +87,7 @@ public class UserServiceTests
     {
         _mockRepository.Setup(repo => repo.GetUserByIdAsync(It.IsAny<int>())).ReturnsAsync((User)null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _userService.GetUserByIdAsync(1));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _usersService.GetUserByIdAsync(1));
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class UserServiceTests
 
         _mockRepository.Setup(repo => repo.GetUserByEmailAsync(user.Email)).ReturnsAsync(user);
 
-        var result = await _userService.GetUserByEmailAsync(user.Email);
+        var result = await _usersService.GetUserByEmailAsync(user.Email);
 
         Assert.NotNull(result);
         Assert.Equal(user.Id, result.Id);
@@ -116,7 +116,7 @@ public class UserServiceTests
     {
         _mockRepository.Setup(repo => repo.GetUserByEmailAsync(It.IsAny<string>())).ReturnsAsync((User)null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _userService.GetUserByEmailAsync("none@example.com"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _usersService.GetUserByEmailAsync("none@example.com"));
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class UserServiceTests
         user.Email = "updated@example.com";
         user.FullName = "Updated name";
 
-        await _userService.UpdateUserAsync(1, user);
+        await _usersService.UpdateUserAsync(1, user);
 
         _mockRepository.Verify(repo => repo.UpdateUser(user), Times.Once());
     }
@@ -156,6 +156,6 @@ public class UserServiceTests
 
         _mockRepository.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync((User)null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _userService.UpdateUserAsync(99, user));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _usersService.UpdateUserAsync(99, user));
     }
 }

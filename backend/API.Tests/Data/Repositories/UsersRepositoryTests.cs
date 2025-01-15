@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Tests.Data.Repositories;
 
-public class UserRepositoryTests : IAsyncLifetime
+public class UsersRepositoryTests : IAsyncLifetime
 {
     private DataContext? _context;
-    private UserRepository? _userRepository;
+    private UsersRepository? _userRepository;
 
     public async Task InitializeAsync()
     {
@@ -17,7 +17,7 @@ public class UserRepositoryTests : IAsyncLifetime
             .Options;
 
         _context = new DataContext(options);
-        _userRepository = new UserRepository(_context);
+        _userRepository = new UsersRepository(_context);
 
         await _context.Users.AddRangeAsync(
             new User

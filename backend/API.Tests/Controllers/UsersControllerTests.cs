@@ -10,14 +10,14 @@ namespace API.Tests.Controllers;
 
 public class UsersControllerTests
 {
-    private readonly UserController _controller;
-    private readonly Mock<IUserService> _userServiceMock;
+    private readonly UsersController _controller;
+    private readonly Mock<IUsersService> _userServiceMock;
     private readonly Mock<JwtTokenService> _jwtServiceMock = new();
 
     public UsersControllerTests()
     {
-        _userServiceMock = new Mock<IUserService>();
-        _controller = new UserController(_userServiceMock.Object, _jwtServiceMock.Object);
+        _userServiceMock = new Mock<IUsersService>();
+        _controller = new UsersController(_userServiceMock.Object, _jwtServiceMock.Object);
     }
 
     [Fact]

@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Data.Repositories;
 
-public class UserRepository : IUserRepository
+public class UsersRepository : IUsersRepository
 {
     private readonly DataContext _context;
 
-    public UserRepository(DataContext context)
+    public UsersRepository(DataContext context)
     {
         _context = context;
     }

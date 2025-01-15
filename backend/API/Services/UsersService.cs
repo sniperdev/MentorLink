@@ -3,14 +3,14 @@ using API.Interfaces;
 
 namespace API.Services;
 
-public class UserService : IUserService
+public class UsersService : IUsersService
 {
     private readonly PasswordHasherService _passwordHasherService;
-    private readonly IUserRepository _userRepository;
+    private readonly IUsersRepository _usersRepository;
 
-    public UserService(IUserRepository userRepository, PasswordHasherService passwordHasherService)
+    public UsersService(IUsersRepository usersRepository, PasswordHasherService passwordHasherService)
     {
-        _userRepository = userRepository;
+        _usersRepository = usersRepository;
         _passwordHasherService = passwordHasherService;
     }
 
@@ -24,14 +24,14 @@ public class UserService : IUserService
     
     public async Task<User> GetUserByIdAsync(int id)
     {
-        var user = await _userRepository.GetUserByIdAsync(id);
+        var user = await _usersRepository.GetUserByIdAsync(id);
         if (user == null) throw new InvalidOperationException("User not found");
         return user;
     }
 
     public async Task<User> GetUserByEmailAsync(string email)
     {
-        var user = await _userRepository.GetUserByEmailAsync(email);
+        var user = await _usersRepository.GetUserByEmailAsync(email);
         if (user == null) throw new InvalidOperationException("User not found");
         return user;
     }
@@ -40,23 +40,23 @@ public class UserService : IUserService
     {
         if (user == null) throw new ArgumentNullException(nameof(user), "User cannot be null");
 
-        var existingUser = await _userRepository.GetUserByIdAsync(id);
+        var existingUser = await _usersRepository.GetUserByIdAsync(id);
         if (existingUser == null) throw new InvalidOperationException("User not found");
 
         existingUser.Email = user.Email;
         existingUser.FullName = user.FullName;
         existingUser.Role = user.Role;
-        await _userRepository.UpdateUser(existingUser);
+        await _usersRepository.UpdateUser(existingUser);
     }
 
     public async Task CreateUserAsync(User user, string password)
     {
-        var existingUser = await _userRepository.GetUserByEmailAsync(user.Email);
+        var existingUser = await _usersRepository.GetUserByEmailAsync(user.Email);
         if (existingUser != null)
             throw new ArgumentException("Email is already taken");
 
         user.PasswordHash = _passwordHasherService.HashPassword(user, password);
 
-        await _userRepository.AddAsync(user);
+        await _usersRepository.AddAsync(user);
     }
 }
