@@ -4,6 +4,7 @@ using API.Entities;
 using API.Interfaces;
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace API.Tests.Controllers;
@@ -11,13 +12,29 @@ namespace API.Tests.Controllers;
 public class UsersControllerTests
 {
     private readonly UsersController _controller;
+    private readonly Mock<JwtTokenService> _jwtServiceMock;
     private readonly Mock<IUsersService> _userServiceMock;
-    private readonly Mock<JwtTokenService> _jwtServiceMock = new();
 
     public UsersControllerTests()
     {
         _userServiceMock = new Mock<IUsersService>();
+        var mockConfiguration = SetupMockConfiguration();
+        _jwtServiceMock = new Mock<JwtTokenService>();
         _controller = new UsersController(_userServiceMock.Object, _jwtServiceMock.Object);
+    }
+
+    private static IConfiguration SetupMockConfiguration()
+    {
+        var inMemorySettings = new Dictionary<string, string?>
+        {
+            { "Jwt:Key", "YourSecretKey" },
+            { "Jwt:Issuer", "YourIssuer" },
+            { "Jwt:Audience", "YourAudience" }
+        };
+
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
     }
 
     [Fact]

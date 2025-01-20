@@ -6,12 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class UsersController : ControllerBase
+public class UsersController : BaseApiController
 {
-    private readonly IUsersService _usersService;
     private readonly JwtTokenService _jwtTokenService;
+    private readonly IUsersService _usersService;
 
     public UsersController(IUsersService usersService, JwtTokenService jwtTokenService)
     {
@@ -52,15 +50,15 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        
+
         var user = await _usersService.GetUserByEmailAsync(loginDto.Email);
-        if(user==null || !_usersService.ValidatePassword(user, loginDto.Password))
+        if (!_usersService.ValidatePassword(user, loginDto.Password))
             return Unauthorized(new { Error = "Invalid email or password" });
 
         var token = _jwtTokenService.GenerateToken(user.Email, user.Role);
         return Ok(new { Token = token });
     }
-    
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUserById(int id)
     {
@@ -71,7 +69,7 @@ public class UsersController : ControllerBase
             {
                 Email = user.Email,
                 FullName = user.FullName,
-                Role = user.Role.ToString() // Konwersja enum na string
+                Role = user.Role.ToString()
             };
             return Ok(userDto);
         }
@@ -91,7 +89,7 @@ public class UsersController : ControllerBase
             {
                 Email = user.Email,
                 FullName = user.FullName,
-                Role = user.Role.ToString() // Konwersja enum na string
+                Role = user.Role.ToString()
             };
             return Ok(userDto);
         }
