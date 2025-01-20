@@ -60,7 +60,7 @@ public class UsersControllerTests
         var conflictResult = Assert.IsType<ConflictObjectResult>(result);
         Assert.Equal(409, conflictResult.StatusCode);
     }
-    
+
     [Fact]
     public async Task GetUserById_ShouldReturnUser_WhenUserExists()
     {

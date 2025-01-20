@@ -71,7 +71,7 @@ public class UsersController : ControllerBase
             {
                 Email = user.Email,
                 FullName = user.FullName,
-                Role = user.Role.ToString() // Konwersja enum na string
+                Role = user.Role.ToString()
             };
             return Ok(userDto);
         }
@@ -91,7 +91,7 @@ public class UsersController : ControllerBase
             {
                 Email = user.Email,
                 FullName = user.FullName,
-                Role = user.Role.ToString() // Konwersja enum na string
+                Role = user.Role.ToString()
             };
             return Ok(userDto);
         }
