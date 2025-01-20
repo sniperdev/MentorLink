@@ -11,9 +11,9 @@ namespace API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUsersService _usersService;
-    private readonly JwtTokenService _jwtTokenService;
+    private readonly IJwtTokenService _jwtTokenService;
 
-    public UsersController(IUsersService usersService, JwtTokenService jwtTokenService)
+    public UsersController(IUsersService usersService, IJwtTokenService jwtTokenService)
     {
         _usersService = usersService;
         _jwtTokenService = jwtTokenService;

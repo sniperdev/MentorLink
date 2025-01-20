@@ -12,11 +12,12 @@ public class UsersControllerTests
 {
     private readonly UsersController _controller;
     private readonly Mock<IUsersService> _userServiceMock;
-    private readonly Mock<JwtTokenService> _jwtServiceMock = new();
+    private readonly Mock<IJwtTokenService> _jwtServiceMock;
 
     public UsersControllerTests()
     {
         _userServiceMock = new Mock<IUsersService>();
+        _jwtServiceMock = new Mock<IJwtTokenService>();
         _controller = new UsersController(_userServiceMock.Object, _jwtServiceMock.Object);
     }
 
@@ -59,18 +60,21 @@ public class UsersControllerTests
         var conflictResult = Assert.IsType<ConflictObjectResult>(result);
         Assert.Equal(409, conflictResult.StatusCode);
     }
-
+    
     [Fact]
     public async Task GetUserById_ShouldReturnUser_WhenUserExists()
     {
         var user = new User { Id = 1, Email = "test@example.com", FullName = "Test User" };
+        var userDto = new UserDto { Email = user.Email, FullName = user.FullName };
         _userServiceMock.Setup(service => service.GetUserByIdAsync(user.Id))
             .ReturnsAsync(user);
-
+    
         var result = await _controller.GetUserById(user.Id);
-
+    
         var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(user, okResult.Value);
+        var returnedUserDto = Assert.IsType<UserDto>(okResult.Value);
+        Assert.Equal(userDto.Email, returnedUserDto.Email);
+        Assert.Equal(userDto.FullName, returnedUserDto.FullName);
     }
 
     [Fact]
