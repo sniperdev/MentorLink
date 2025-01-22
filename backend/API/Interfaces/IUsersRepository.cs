@@ -1,8 +1,8 @@
 using API.Entities;
 
-namespace API.Data.Interfaces;
+namespace API.Interfaces;
 
-public interface IUserRepository
+public interface IUsersRepository
 {
     Task AddAsync(User user);
     Task UpdateUser(User user);
