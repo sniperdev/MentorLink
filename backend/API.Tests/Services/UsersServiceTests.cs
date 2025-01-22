@@ -1,6 +1,7 @@
 using API.Entities;
 using API.Interfaces;
 using API.Services;
+using FluentAssertions;
 using Moq;
 
 namespace API.Tests.Services;
@@ -33,32 +34,20 @@ public class UsersServiceTests
 
         await _usersService.CreateUserAsync(newUser, "password123");
 
-        _mockRepository.Verify(repo => repo.AddAsync(newUser), Times.Once());
+        _mockRepository.Verify(repo => repo.AddAsync(It.Is<User>(u => u.Email == newUser.Email)), Times.Once());
     }
 
     [Fact]
     public async Task CreateUser_ShouldThrowException_WhenEmailIsAlreadyTaken()
     {
-        var existingUser = new User
-        {
-            Id = 1,
-            FullName = "Jane",
-            Email = "john@example.com",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.UtcNow
-        };
-        var newUser = new User
-        {
-            Id = 2,
-            FullName = "John",
-            Email = "john@example.com",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.UtcNow
-        };
+        var existingUser = new User { Email = "john@example.com" };
+        var newUser = new User { Email = "john@example.com" };
 
         _mockRepository.Setup(repo => repo.GetUserByEmailAsync(newUser.Email)).ReturnsAsync(existingUser);
 
-        await Assert.ThrowsAsync<ArgumentException>(() => _usersService.CreateUserAsync(newUser, "password123"));
+        var act = () => _usersService.CreateUserAsync(newUser, "password123");
+
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("Email is already taken*");
     }
 
     [Fact]
@@ -67,8 +56,8 @@ public class UsersServiceTests
         var user = new User
         {
             Id = 1,
-            FullName = "Jane",
             Email = "john@example.com",
+            FullName = "Jane Doe",
             Role = UserRole.Student,
             CreatedAt = DateTime.UtcNow
         };
@@ -77,9 +66,8 @@ public class UsersServiceTests
 
         var result = await _usersService.GetUserByIdAsync(user.Id);
 
-        Assert.NotNull(result);
-        Assert.Equal(user.Id, result.Id);
-        Assert.Equal(user.Email, result.Email);
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(user);
     }
 
     [Fact]
@@ -87,7 +75,9 @@ public class UsersServiceTests
     {
         _mockRepository.Setup(repo => repo.GetUserByIdAsync(It.IsAny<int>())).ReturnsAsync((User)null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _usersService.GetUserByIdAsync(1));
+        Func<Task> act = () => _usersService.GetUserByIdAsync(1);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("User not found");
     }
 
     [Fact]
@@ -96,8 +86,8 @@ public class UsersServiceTests
         var user = new User
         {
             Id = 1,
-            FullName = "Jane",
             Email = "john@example.com",
+            FullName = "Jane Doe",
             Role = UserRole.Student,
             CreatedAt = DateTime.UtcNow
         };
@@ -106,9 +96,8 @@ public class UsersServiceTests
 
         var result = await _usersService.GetUserByEmailAsync(user.Email);
 
-        Assert.NotNull(result);
-        Assert.Equal(user.Id, result.Id);
-        Assert.Equal(user.Email, result.Email);
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(user);
     }
 
     [Fact]
@@ -116,7 +105,9 @@ public class UsersServiceTests
     {
         _mockRepository.Setup(repo => repo.GetUserByEmailAsync(It.IsAny<string>())).ReturnsAsync((User)null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _usersService.GetUserByEmailAsync("none@example.com"));
+        Func<Task> act = () => _usersService.GetUserByEmailAsync("none@example.com");
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("User not found");
     }
 
     [Fact]
@@ -136,10 +127,11 @@ public class UsersServiceTests
 
         user.Email = "updated@example.com";
         user.FullName = "Updated name";
+        await _usersService.UpdateUserAsync(user.Id, user);
 
-        await _usersService.UpdateUserAsync(1, user);
-
-        _mockRepository.Verify(repo => repo.UpdateUser(user), Times.Once());
+        _mockRepository.Verify(
+            repo => repo.UpdateUser(It.Is<User>(u => u.Email == "updated@example.com" && u.FullName == "Updated name")),
+            Times.Once());
     }
 
     [Fact]
@@ -147,15 +139,15 @@ public class UsersServiceTests
     {
         var user = new User
         {
-            Id = 1,
+            Id = 99,
             Email = "john@example.com",
-            FullName = "John Doe",
-            Role = UserRole.Student,
-            CreatedAt = DateTime.UtcNow
+            FullName = "John Doe"
         };
 
         _mockRepository.Setup(repo => repo.GetUserByIdAsync(user.Id)).ReturnsAsync((User)null);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _usersService.UpdateUserAsync(99, user));
+        var act = () => _usersService.UpdateUserAsync(99, user);
+
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("User not found");
     }
 }

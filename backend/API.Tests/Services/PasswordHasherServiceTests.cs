@@ -1,5 +1,6 @@
 using API.Entities;
 using API.Services;
+using FluentAssertions;
 
 namespace API.Tests.Services;
 
@@ -22,7 +23,7 @@ public class PasswordHasherServiceTests
 
         var hashedPassword = _passwordHasherService.HashPassword(user, password);
 
-        Assert.False(string.IsNullOrWhiteSpace(hashedPassword));
+        hashedPassword.Should().NotBeNullOrWhiteSpace();
     }
 
 
@@ -32,7 +33,9 @@ public class PasswordHasherServiceTests
     {
         var password = "StrongPassword123";
 
-        Assert.Throws<ArgumentNullException>(() => _passwordHasherService.HashPassword(null, password));
+        Action act = () => _passwordHasherService.HashPassword(null, password);
+
+        act.Should().Throw<ArgumentNullException>().WithMessage("User cannot be null*");
     }
 
 
@@ -41,7 +44,9 @@ public class PasswordHasherServiceTests
     {
         var user = new User { Email = "test@example.com", FullName = "Test User" };
 
-        Assert.Throws<ArgumentException>(() => _passwordHasherService.HashPassword(user, ""));
+        Action act = () => _passwordHasherService.HashPassword(user, "");
+
+        act.Should().Throw<ArgumentException>().WithMessage("Password cannot be null or empty*");
     }
 
 
@@ -56,7 +61,7 @@ public class PasswordHasherServiceTests
 
         var isValid = _passwordHasherService.VerifyPassword(user, hashedPassword, password);
 
-        Assert.True(isValid);
+        isValid.Should().BeTrue();
     }
 
 
@@ -70,7 +75,7 @@ public class PasswordHasherServiceTests
 
         var isValid = _passwordHasherService.VerifyPassword(user, hashedPassword, "WrongPassword");
 
-        Assert.False(isValid);
+        isValid.Should().BeFalse();
     }
 
 
@@ -82,6 +87,9 @@ public class PasswordHasherServiceTests
 
         Assert.Throws<ArgumentNullException>(() =>
             _passwordHasherService.VerifyPassword(null, hashedPassword, providedPassword));
+        Action act = () => _passwordHasherService.VerifyPassword(null, hashedPassword, providedPassword);
+
+        act.Should().Throw<ArgumentNullException>().WithMessage("User cannot be null*");
     }
 
 
@@ -92,8 +100,11 @@ public class PasswordHasherServiceTests
         var providedPassword = "password";
 
         Assert.Throws<ArgumentException>(() => _passwordHasherService.VerifyPassword(user, "", providedPassword));
-    }
+        Action act = () => _passwordHasherService.VerifyPassword(user, "", providedPassword);
 
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("Both hashed password and provided password must be non-empty*");
+    }
 
     [Fact]
     public void VerifyPassword_EmptyProvidedPassword_ThrowsArgumentException()
@@ -101,6 +112,9 @@ public class PasswordHasherServiceTests
         var user = new User { Email = "test@example.com", FullName = "Test User" };
         var hashedPassword = "somehashedpassword";
 
-        Assert.Throws<ArgumentException>(() => _passwordHasherService.VerifyPassword(user, hashedPassword, ""));
+        Action act = () => _passwordHasherService.VerifyPassword(user, hashedPassword, "");
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("Both hashed password and provided password must be non-empty*");
     }
 }

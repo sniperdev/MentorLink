@@ -2,7 +2,7 @@ using API.Controllers;
 using API.DTOs;
 using API.Entities;
 using API.Interfaces;
-using API.Services;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -11,8 +11,8 @@ namespace API.Tests.Controllers;
 public class UsersControllerTests
 {
     private readonly UsersController _controller;
-    private readonly Mock<IUsersService> _userServiceMock;
     private readonly Mock<IJwtTokenService> _jwtServiceMock;
+    private readonly Mock<IUsersService> _userServiceMock;
 
     public UsersControllerTests()
     {
@@ -37,8 +37,7 @@ public class UsersControllerTests
 
         var result = await _controller.CreateUser(registerUserDto);
 
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(200, okResult.StatusCode);
+        result.Should().BeOfType<OkObjectResult>().Which.StatusCode.Should().Be(200);
     }
 
     [Fact]
@@ -57,24 +56,82 @@ public class UsersControllerTests
 
         var result = await _controller.CreateUser(registerUserDto);
 
-        var conflictResult = Assert.IsType<ConflictObjectResult>(result);
-        Assert.Equal(409, conflictResult.StatusCode);
+        result.Should().BeOfType<ConflictObjectResult>().Which.StatusCode.Should().Be(409);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsOkWithToken_WhenCredentialsAreValid()
+    {
+        var loginDto = new LoginDto { Email = "test@example.com", Password = "password" };
+        var user = new User { Email = "test@example.com", Role = UserRole.Student };
+        var token = "token";
+        _userServiceMock.Setup(s => s.GetUserByEmailAsync(loginDto.Email)).ReturnsAsync(user);
+        _userServiceMock.Setup(s => s.ValidatePassword(user, loginDto.Password)).Returns(true);
+        _jwtServiceMock.Setup(s => s.GenerateToken(user.Email, user.Role)).Returns(token);
+
+        var result = await _controller.Login(loginDto);
+
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(new { Token = token });
+    }
+
+    [Fact]
+    public async Task Login_InvalidCredentials_ReturnsUnauthorized()
+    {
+        var loginDto = new LoginDto { Email = "test@example.com", Password = "WrongPassword123" };
+        var user = new User { Email = loginDto.Email, Role = UserRole.Student };
+
+        _userServiceMock.Setup(service => service.GetUserByEmailAsync(loginDto.Email))
+            .ReturnsAsync(user);
+        _userServiceMock.Setup(service => service.ValidatePassword(user, loginDto.Password))
+            .Returns(false);
+
+        var result = await _controller.Login(loginDto);
+
+        result.Should().BeOfType<UnauthorizedObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(new { Error = "Invalid email or password" });
+    }
+
+    [Fact]
+    public async Task Login_InvalidEmail_ReturnsUnauthorized()
+    {
+        var loginDto = new LoginDto { Email = "nonexistent@example.com", Password = "SomePassword123" };
+
+        _userServiceMock.Setup(service => service.GetUserByEmailAsync(loginDto.Email))
+            .ReturnsAsync((User)null);
+
+        var result = await _controller.Login(loginDto);
+
+        result.Should().BeOfType<UnauthorizedObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(new { Error = "Invalid email or password" });
+    }
+
+    [Fact]
+    public async Task Login_InvalidModelState_ReturnsBadRequest()
+    {
+        var loginDto = new LoginDto();
+        _controller.ModelState.AddModelError("Email", "Email is required.");
+
+        var result = await _controller.Login(loginDto);
+
+        result.Should().BeOfType<BadRequestObjectResult>()
+            .Which.Value.Should().BeOfType<SerializableError>()
+            .Which.Should().ContainKey("Email")
+            .WhoseValue.Should().BeEquivalentTo(new[] { "Email is required." });
     }
 
     [Fact]
     public async Task GetUserById_ShouldReturnUser_WhenUserExists()
     {
         var user = new User { Id = 1, Email = "test@example.com", FullName = "Test User" };
-        var userDto = new UserDto { Email = user.Email, FullName = user.FullName };
-        _userServiceMock.Setup(service => service.GetUserByIdAsync(user.Id))
+        var userDto = new UserDto { Email = user.Email, FullName = user.FullName, Role = user.Role.ToString() };
+        _userServiceMock
+            .Setup(service =>
+                service.GetUserByIdAsync(user.Id))
             .ReturnsAsync(user);
-    
+
         var result = await _controller.GetUserById(user.Id);
-    
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnedUserDto = Assert.IsType<UserDto>(okResult.Value);
-        Assert.Equal(userDto.Email, returnedUserDto.Email);
-        Assert.Equal(userDto.FullName, returnedUserDto.FullName);
+
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(userDto);
     }
 
     [Fact]
@@ -85,8 +142,7 @@ public class UsersControllerTests
 
         var result = await _controller.GetUserById(1);
 
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("User not found", notFoundResult.Value?.ToString());
+        result.Should().BeOfType<NotFoundObjectResult>().Which.Value.Should().Be("User not found");
     }
 
     [Fact]
@@ -98,7 +154,7 @@ public class UsersControllerTests
 
         var result = await _controller.UpdateUser(user.Id, user);
 
-        Assert.IsType<NoContentResult>(result);
+        result.Should().BeOfType<NoContentResult>();
     }
 
     [Fact]
@@ -110,7 +166,6 @@ public class UsersControllerTests
 
         var result = await _controller.UpdateUser(99, user);
 
-        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
-        Assert.Equal("User not found", notFoundResult.Value);
+        result.Should().BeOfType<NotFoundObjectResult>().Which.Value.Should().Be("User not found");
     }
 }
